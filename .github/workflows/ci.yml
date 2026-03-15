@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main, copilot/**]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+        env:
+          DATABASE_URL: postgresql://dummy:dummy@localhost/dummy
+          NEXTAUTH_URL: http://localhost:3000
+          NEXTAUTH_SECRET: ci-secret-key-for-build-only
+          PUSHER_APP_ID: dummy
+          PUSHER_KEY: dummy
+          PUSHER_SECRET: dummy
+          PUSHER_CLUSTER: ap2
+          NEXT_PUBLIC_PUSHER_KEY: dummy
+          NEXT_PUBLIC_PUSHER_CLUSTER: ap2
+          CLOUDINARY_CLOUD_NAME: dummy
+          CLOUDINARY_API_KEY: dummy
+          CLOUDINARY_API_SECRET: dummy
+          NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: dummy
+          OPENAI_API_KEY: sk-dummy
+          MAILGUN_API_KEY: dummy
+          MAILGUN_DOMAIN: mg.example.com
+          RAZORPAY_KEY_ID: rzp_test_dummy
+          RAZORPAY_KEY_SECRET: dummy
+          NEXT_PUBLIC_RAZORPAY_KEY_ID: rzp_test_dummy
+          STRIPE_SECRET_KEY: sk_test_dummy
+          STRIPE_WEBHOOK_SECRET: whsec_dummy
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_dummy
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+          AFFILIATE_GARENA_URL: https://shop.garena.in/
+          AFFILIATE_AMAZON_URL: https://www.amazon.in/gaming

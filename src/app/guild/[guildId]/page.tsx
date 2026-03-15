@@ -7,11 +7,12 @@ import Link from 'next/link'
 import { Users, Crown, Shield, Copy, MessageSquare, BarChart2, Trophy } from 'lucide-react'
 import { generateInviteUrl } from '@/lib/utils'
 
-export default async function GuildPage({ params }: { params: { guildId: string } }) {
+export default async function GuildPage({ params }: { params: Promise<{ guildId: string }> }) {
   const session = await getServerSession(authOptions)
+  const { guildId } = await params
 
   const guild = await prisma.guild.findUnique({
-    where: { id: params.guildId },
+    where: { id: guildId },
     include: {
       members: {
         include: {

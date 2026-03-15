@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 
-export async function POST(req: NextRequest, { params }: { params: { guildId: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ guildId: string }> }) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -12,11 +12,12 @@ export async function POST(req: NextRequest, { params }: { params: { guildId: st
     return NextResponse.json({ error: 'Already in a guild' }, { status: 409 })
   }
 
-  const guild = await prisma.guild.findUnique({ where: { id: params.guildId } })
+  const { guildId } = await params
+  const guild = await prisma.guild.findUnique({ where: { id: guildId } })
   if (!guild) return NextResponse.json({ error: 'Guild not found' }, { status: 404 })
 
   await prisma.guildMember.create({
-    data: { userId: session.user.id, guildId: params.guildId, role: 'MEMBER' },
+    data: { userId: session.user.id, guildId, role: 'MEMBER' },
   })
 
   return NextResponse.json({ success: true })

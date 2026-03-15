@@ -6,15 +6,16 @@ import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
 import { Users } from 'lucide-react'
 
-export default async function JoinGuildPage({ params }: { params: { inviteCode: string } }) {
+export default async function JoinGuildPage({ params }: { params: Promise<{ inviteCode: string }> }) {
   const session = await getServerSession(authOptions)
+  const { inviteCode } = await params
 
   if (!session) {
-    redirect(`/auth/login?next=/guild/join/${params.inviteCode}`)
+    redirect(`/auth/login?next=/guild/join/${inviteCode}`)
   }
 
   const guild = await prisma.guild.findUnique({
-    where: { inviteCode: params.inviteCode },
+    where: { inviteCode },
     include: { members: true, _count: { select: { members: true } } },
   })
 

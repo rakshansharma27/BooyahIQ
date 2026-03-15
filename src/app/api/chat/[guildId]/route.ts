@@ -4,15 +4,16 @@ import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { pusherServer } from '@/lib/pusher'
 
-export async function GET(req: NextRequest, { params }: { params: { guildId: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ guildId: string }> }) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const { guildId } = await params
   const { searchParams } = new URL(req.url)
   const channel = searchParams.get('channel') || 'general'
 
   const messages = await prisma.chatMessage.findMany({
-    where: { guildId: params.guildId, channel },
+    where: { guildId, channel },
     include: {
       user: { select: { playerName: true, avatarUrl: true, isPremium: true } },
     },
@@ -23,10 +24,11 @@ export async function GET(req: NextRequest, { params }: { params: { guildId: str
   return NextResponse.json(messages)
 }
 
-export async function POST(req: NextRequest, { params }: { params: { guildId: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ guildId: string }> }) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const { guildId } = await params
   const { content, channel = 'general' } = await req.json()
 
   if (!content?.trim()) {
@@ -35,7 +37,7 @@ export async function POST(req: NextRequest, { params }: { params: { guildId: st
 
   // Verify membership
   const member = await prisma.guildMember.findFirst({
-    where: { userId: session.user.id, guildId: params.guildId },
+    where: { userId: session.user.id, guildId },
   })
   if (!member) return NextResponse.json({ error: 'Not a guild member' }, { status: 403 })
 
@@ -44,7 +46,7 @@ export async function POST(req: NextRequest, { params }: { params: { guildId: st
       content: content.trim(),
       channel,
       userId: session.user.id,
-      guildId: params.guildId,
+      guildId,
     },
     include: {
       user: { select: { playerName: true, avatarUrl: true, isPremium: true } },
@@ -53,7 +55,7 @@ export async function POST(req: NextRequest, { params }: { params: { guildId: st
 
   // Broadcast via Pusher
   await pusherServer.trigger(
-    `guild-${params.guildId}-${channel}`,
+    `guild-${guildId}-${channel}`,
     'new-message',
     message
   )

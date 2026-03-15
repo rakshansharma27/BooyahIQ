@@ -4,9 +4,10 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { Crown, Trophy, Target, Swords, Star, Shield } from 'lucide-react'
 
-export default async function PublicProfilePage({ params }: { params: { username: string } }) {
+export default async function PublicProfilePage({ params }: { params: Promise<{ username: string }> }) {
+  const { username } = await params
   const user = await prisma.user.findFirst({
-    where: { playerName: { equals: params.username, mode: 'insensitive' } },
+    where: { playerName: { equals: username, mode: 'insensitive' } },
     include: {
       guildMembers: { include: { guild: true } },
       matches: { orderBy: { playedAt: 'desc' }, take: 10 },
